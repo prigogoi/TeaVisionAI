@@ -5,8 +5,6 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.models as models
 import torch.nn as nn
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image as keras_image
 import pandas as pd
 from datetime import datetime
 import time
@@ -52,10 +50,7 @@ html, body, [class*="css"] {
     color: white;
 }
 
-/* MAIN APP */
-
 .stApp {
-
     background:
         radial-gradient(circle at top left, #1b4332 0%, transparent 30%),
         radial-gradient(circle at bottom right, #081c15 0%, transparent 30%),
@@ -69,13 +64,9 @@ html, body, [class*="css"] {
     color: white;
 }
 
-/* REMOVE STREAMLIT */
-
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
-
-/* MAIN CONTAINER */
 
 .block-container {
     padding-top: 1rem;
@@ -83,16 +74,10 @@ header {visibility: hidden;}
     padding-right: 4rem;
 }
 
-/* TITLE */
-
 .main-title {
-
     text-align: center;
-
     font-size: 75px;
-
     font-weight: 800;
-
     margin-top: 10px;
 
     background:
@@ -104,38 +89,25 @@ header {visibility: hidden;}
         );
 
     -webkit-background-clip: text;
-
     -webkit-text-fill-color: transparent;
 }
 
 .subtitle {
-
     text-align: center;
-
     color: #d1fae5;
-
     font-size: 22px;
-
     margin-top: -10px;
-
     margin-bottom: 40px;
 }
 
-/* NAVIGATION */
-
 div[role="radiogroup"] {
-
     display: flex;
-
     justify-content: center;
-
     gap: 15px;
-
     margin-bottom: 50px;
 }
 
 div[role="radiogroup"] > label {
-
     background:
         linear-gradient(
             145deg,
@@ -147,15 +119,10 @@ div[role="radiogroup"] > label {
         1px solid rgba(255,255,255,0.08);
 
     border-radius: 22px;
-
     padding: 15px 28px;
-
     min-width: 220px;
-
     text-align: center;
-
     backdrop-filter: blur(14px);
-
     transition: 0.35s ease;
 
     box-shadow:
@@ -163,7 +130,6 @@ div[role="radiogroup"] > label {
 }
 
 div[role="radiogroup"] > label:hover {
-
     transform: translateY(-5px);
 
     border:
@@ -174,18 +140,12 @@ div[role="radiogroup"] > label:hover {
 }
 
 div[role="radiogroup"] p {
-
     color: white !important;
-
     font-size: 16px !important;
-
     font-weight: 700 !important;
 }
 
-/* CARDS */
-
 .card {
-
     background:
         linear-gradient(
             145deg,
@@ -197,13 +157,9 @@ div[role="radiogroup"] p {
         1px solid rgba(255,255,255,0.08);
 
     border-radius: 28px;
-
     padding: 35px;
-
     text-align: center;
-
     backdrop-filter: blur(16px);
-
     transition: 0.3s;
 
     box-shadow:
@@ -213,23 +169,16 @@ div[role="radiogroup"] p {
 }
 
 .card:hover {
-
     transform: translateY(-8px);
 
     box-shadow:
         0 20px 40px rgba(34,197,94,0.18);
 }
 
-/* BUTTON */
-
 .stButton > button {
-
     width: 100%;
-
     height: 58px;
-
     border-radius: 18px;
-
     border: none;
 
     background:
@@ -240,11 +189,8 @@ div[role="radiogroup"] p {
         );
 
     color: #04130c;
-
     font-size: 18px;
-
     font-weight: 700;
-
     transition: 0.3s ease;
 
     box-shadow:
@@ -252,17 +198,13 @@ div[role="radiogroup"] p {
 }
 
 .stButton > button:hover {
-
     transform: translateY(-3px);
 
     box-shadow:
         0 12px 30px rgba(34,197,94,0.45);
 }
 
-/* FILE UPLOADER */
-
 [data-testid="stFileUploader"] {
-
     background:
         rgba(255,255,255,0.05);
 
@@ -270,26 +212,18 @@ div[role="radiogroup"] p {
         1px dashed rgba(255,255,255,0.15);
 
     border-radius: 22px;
-
     padding: 25px;
-
     backdrop-filter: blur(10px);
 }
 
-/* IMAGE */
-
 img {
-
     border-radius: 24px !important;
 
     box-shadow:
         0 15px 40px rgba(0,0,0,0.4);
 }
 
-/* ALERTS */
-
 [data-testid="stAlert"] {
-
     border-radius: 18px;
 }
 
@@ -297,36 +231,34 @@ img {
 """, unsafe_allow_html=True)
 
 # =========================================================
-# LOAD MODELS
+# LOAD MODEL
 # =========================================================
 
 @st.cache_resource
-def load_models():
+def load_model():
 
-    filter_model = load_model("filtre.keras")
+    model = models.resnet50(weights=None)
 
-    disease_model = models.resnet50(weights=None)
-
-    disease_model.fc = nn.Sequential(
+    model.fc = nn.Sequential(
         nn.Dropout(0.3),
         nn.Linear(
-            disease_model.fc.in_features,
+            model.fc.in_features,
             7
         )
     )
 
-    disease_model.load_state_dict(
+    model.load_state_dict(
         torch.load(
             "ResNet50.pth",
             map_location="cpu"
         )
     )
 
-    disease_model.eval()
+    model.eval()
 
-    return filter_model, disease_model
+    return model
 
-filter_model, disease_model = load_models()
+disease_model = load_model()
 
 # =========================================================
 # LABELS
@@ -389,12 +321,6 @@ disease_data = {
         "description": "Leaf appears healthy.",
         "treatment": "No treatment required.",
         "prevention": "Continue proper care."
-    },
-
-    "Not Tea Leaf": {
-        "description": "Uploaded image is not a tea leaf.",
-        "treatment": "Upload a valid tea leaf image.",
-        "prevention": "Ensure proper image upload."
     }
 }
 
@@ -402,18 +328,7 @@ disease_data = {
 # IMAGE PREPROCESSING
 # =========================================================
 
-def preprocess_for_filter(img_path):
-
-    img = keras_image.load_img(
-        img_path,
-        target_size=(224, 224)
-    )
-
-    img_array = keras_image.img_to_array(img) / 255.0
-
-    return np.expand_dims(img_array, axis=0)
-
-def preprocess_for_disease(img_path):
+def preprocess_image(img_path):
 
     transform = transforms.Compose([
 
@@ -432,24 +347,12 @@ def preprocess_for_disease(img_path):
     return transform(image).unsqueeze(0)
 
 # =========================================================
-# TEA LEAF CHECK
-# =========================================================
-
-def is_tea_leaf(img_path):
-
-    img = preprocess_for_filter(img_path)
-
-    prob = filter_model.predict(img)[0][0]
-
-    return prob > 0.5
-
-# =========================================================
 # PREDICTION
 # =========================================================
 
 def predict_disease(img_path):
 
-    input_tensor = preprocess_for_disease(img_path)
+    input_tensor = preprocess_image(img_path)
 
     with torch.no_grad():
 
@@ -665,18 +568,7 @@ elif page == "✨ Detect Disease":
 
                     progress.progress(i + 1)
 
-                leaf_check = is_tea_leaf(save_path)
-
-                if leaf_check:
-
-                    predicted_class, confidence = (
-                        predict_disease(save_path)
-                    )
-
-                else:
-
-                    predicted_class = "Not Tea Leaf"
-                    confidence = 0
+                predicted_class, confidence = predict_disease(save_path)
 
                 loading.empty()
                 progress.empty()
@@ -690,24 +582,22 @@ elif page == "✨ Detect Disease":
                 else:
                     severity = "Mild"
 
-                if predicted_class != "Not Tea Leaf":
+                st.session_state.history.append({
 
-                    st.session_state.history.append({
+                    "Disease":
+                    predicted_class,
 
-                        "Disease":
-                        predicted_class,
+                    "Confidence":
+                    round(confidence, 2),
 
-                        "Confidence":
-                        round(confidence, 2),
+                    "Severity":
+                    severity,
 
-                        "Severity":
-                        severity,
-
-                        "Time":
-                        datetime.now().strftime(
-                            "%d %b %Y | %I:%M %p"
-                        )
-                    })
+                    "Time":
+                    datetime.now().strftime(
+                        "%d %b %Y | %I:%M %p"
+                    )
+                })
 
                 st.success(
                     f"Prediction: {predicted_class}"
