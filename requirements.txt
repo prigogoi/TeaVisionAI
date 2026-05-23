@@ -1,7 +1,10 @@
 streamlit
-tensorflow
+tensorflow==2.15.0
 torch
 torchvision
 numpy
 pillow
 pandas
+opencv-python-headless
+scikit-learn
+matplotlib
